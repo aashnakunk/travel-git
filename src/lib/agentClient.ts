@@ -179,6 +179,7 @@ export async function agentSuggestDestinations(answers: {
   budget?: string
   food?: string
   company?: string
+  mustHaves?: string
 }): Promise<SuggestedDestinationResponse[] | null> {
   try {
     const res = await fetch('/api/agent/suggest', {

@@ -565,6 +565,7 @@ export interface SuggestInput {
   budget?: string
   food?: string
   company?: string
+  mustHaves?: string // free-text constraints, e.g. "in the USA", "no long flights"
   apiKey?: string
 }
 
@@ -590,7 +591,8 @@ export async function suggestDestinationsAI(
     "mustKnow": "1 short can't-miss tip or must-know before planning (best season, a signature experience, or a booking-ahead warning)"
   }
 ]
-Pick 3 DISTINCT destinations that genuinely fit the vibe.`
+Pick 3 DISTINCT destinations that genuinely fit the vibe.
+CRITICAL: Strictly honor the traveler's hard constraints (especially region/country, e.g. "in the USA", budget ceilings, "no long flights"). If they say a country or region, EVERY suggestion MUST be within it. Do not suggest places that violate a stated constraint.`
 
   const vibe = [
     input.scenery ? `scenery: ${input.scenery}` : '',
@@ -602,7 +604,14 @@ Pick 3 DISTINCT destinations that genuinely fit the vibe.`
     .filter(Boolean)
     .join(', ')
 
-  const user = `Traveler's vibe — ${vibe || 'open to anything'}.\nSuggest 3 destinations that fit. Search the web for current, real recommendations.`
+  const constraints = input.mustHaves?.trim()
+  const user = [
+    `Traveler's vibe — ${vibe || 'open to anything'}.`,
+    constraints ? `MUST-HAVES / HARD CONSTRAINTS (obey strictly): "${constraints}".` : '',
+    `Suggest 3 destinations that fit. Search the web for current, real recommendations.`,
+  ]
+    .filter(Boolean)
+    .join('\n')
 
   const { text } = await runWithTools(client, DEFAULT_MODEL, system, user)
   const parsed = extractJsonArray(text)

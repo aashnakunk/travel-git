@@ -120,13 +120,14 @@ app.post('/api/agent/flights', async (req, res) => {
 // Suggest destinations from a vibe questionnaire (web-grounded).
 app.post('/api/agent/suggest', async (req, res) => {
   try {
-    const { scenery, pace, budget, food, company } = req.body ?? {}
+    const { scenery, pace, budget, food, company, mustHaves } = req.body ?? {}
     const result = await suggestDestinationsAI({
       scenery,
       pace,
       budget,
       food,
       company,
+      mustHaves,
       apiKey: userKeyFrom(req),
     })
     if (!result) return res.status(503).json({ error: 'agent_unavailable' })

@@ -111,7 +111,11 @@ export function createSupabaseRepo(sb: SupabaseClient): Repo {
     }
 
     const id = uid('trip')
-    await sb.from('trips').insert({
+    // Base row uses only columns guaranteed by migration 0001. `visibility` and
+    // `settings` (added in migration 0002) are written separately and tolerated
+    // if that migration hasn't been applied — so trip creation never hard-fails
+    // on a partially-migrated database. Reads default them via rowToTrip.
+    const baseRow = {
       id,
       name: input.name,
       destination: input.destination,
@@ -121,11 +125,20 @@ export function createSupabaseRepo(sb: SupabaseClient): Repo {
       collaborator_emails: input.collaboratorEmails,
       plan_path: input.planPath,
       vibe_answers: input.vibeAnswers ?? null,
-      visibility: 'shared',
-      settings: { ...DEFAULT_TRIP_SETTINGS },
       itinerary,
       commits: [initialCommit],
-    })
+    }
+    // Try the full row (with visibility + settings); if those columns don't
+    // exist yet, retry with just the base row so creation still succeeds.
+    let { error: insertError } = await sb
+      .from('trips')
+      .insert({ ...baseRow, visibility: 'shared', settings: { ...DEFAULT_TRIP_SETTINGS } })
+    if (insertError && /column|schema cache/i.test(insertError.message)) {
+      ;({ error: insertError } = await sb.from('trips').insert(baseRow))
+    }
+    if (insertError) {
+      throw new Error(`Could not create trip: ${insertError.message}`)
+    }
 
     // Create pending invites for each collaborator email.
     for (const email of input.collaboratorEmails) {

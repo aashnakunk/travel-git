@@ -64,6 +64,7 @@ export default function CreateTrip() {
   const [collaboratorEmails, setCollaboratorEmails] = useState<string[]>([])
   const [emailInput, setEmailInput] = useState('')
   const [planning, setPlanning] = useState(false)
+  const [createError, setCreateError] = useState('')
 
   const order =
     planPath === 'vibe' ? VIBE_STEP_ORDER : planPath === 'agent' ? AGENT_STEP_ORDER : STEP_ORDER
@@ -102,6 +103,7 @@ export default function CreateTrip() {
         budget: vibeAnswers.budget,
         food: vibeAnswers.food,
         company: vibeAnswers.company,
+        mustHaves: vibeMustHaves.trim() || undefined,
       })
       if (ai && ai.length > 0) {
         setSuggestions(ai)
@@ -136,6 +138,7 @@ export default function CreateTrip() {
 
     let itinerary: Itinerary | undefined
     setPlanning(true)
+    setCreateError('')
     try {
       const numDays = computeNumDays(startDate, endDate)
       const result = await agentPlan({
@@ -160,6 +163,8 @@ export default function CreateTrip() {
         itinerary,
       })
       navigate(`/trip/${created.id}`)
+    } catch (err) {
+      setCreateError((err as Error)?.message || 'Could not create the trip. Please try again.')
     } finally {
       setPlanning(false)
     }
@@ -557,6 +562,11 @@ export default function CreateTrip() {
               )}
             </Button>
           </div>
+          {createError && (
+            <p data-testid="create-error" className="rounded-md border border-removed/40 bg-removed/10 px-3 py-2 text-sm text-removed">
+              {createError}
+            </p>
+          )}
         </div>
       )}
     </div>

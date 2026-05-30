@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { GitBranch, GitMerge, Users, ArrowRight } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Button, GitBranchIcon } from '../components/ui'
+import FlightBranch from '../components/FlightBranch'
 
 interface Feature {
   title: string
@@ -61,8 +62,13 @@ export default function Welcome() {
         requests, and you merge the ones you love to keep everyone on the same plan.
       </p>
 
+      {/* Interactive git + flight hero — plane flies main, commits light up */}
+      <div className="mt-8 animate-fade-in" style={{ animationDelay: '200ms' }}>
+        <FlightBranch />
+      </div>
+
       <div
-        className="mt-8 flex animate-fade-in justify-center"
+        className="mt-6 flex animate-fade-in justify-center"
         style={{ animationDelay: '240ms' }}
       >
         <Button
